@@ -55,6 +55,7 @@ sheets и google drive.
 ### Самостоятельно разработать сценарий воспроизведения звукового
 сопровождения в Unity в зависимости от изменения считанных данных в задании 2
 -Будем выводить разницу между ошибками итераций
+
 -![image](https://user-images.githubusercontent.com/80514942/193808903-3e7d471f-44e8-4b26-836b-48f50e56b1db.png)
 -![image](https://user-images.githubusercontent.com/80514942/193809013-2e27bd1c-32bd-4dd5-8083-00fa679505d7.png)
 -![image](https://user-images.githubusercontent.com/80514942/193809201-2235690e-50c6-4e95-aa79-4bbf3f0f5f20.png)
