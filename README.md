@@ -62,7 +62,7 @@ while i <= len(mon):
 -![image](https://user-images.githubusercontent.com/80514942/193808016-0913c5bf-dbaa-4c42-a873-27c69e865474.png)
 -Написать функционал на Unity, в котором будет воспризводиться аудио-
 файл в зависимости от значения данных из таблицы.
-```С#
+```C#
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
