@@ -28,9 +28,15 @@
 ## Задание 1
 - Реализовать систему машинного обучения в связке Python -
 Google-Sheets – Unity.
+
+
 - Создаем проект в Unity, добовляем в папку с проектом json файлы
 
+
+
 -Открываем Anaconda Promt и пишем команды для создания и активации нового ML агента
+
+
 
 -![image](https://user-images.githubusercontent.com/80514942/194835821-84983737-1208-4c31-aeb3-0af7b3fc0cfb.png)
 -![image](https://user-images.githubusercontent.com/80514942/194835961-461e020e-7cf4-4bc5-9528-5f6282c8c110.png)
