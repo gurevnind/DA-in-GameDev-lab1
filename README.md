@@ -46,9 +46,17 @@ Google-Sheets – Unity.
 - Создаем объекты плоскости, куба и сферы, выставляем настройки у компонентов, добавляем материалы, к
 
 -![image](https://user-images.githubusercontent.com/80514942/194835438-752ed1bd-e747-40e0-8b5f-377199bf81c0.png)
+
+
 - ![image](https://user-images.githubusercontent.com/80514942/194836164-75f90456-cd1c-4a71-91b2-22c2beb3778b.png)
+
+
 - В инспекторе добавялем в нашу сферу RigidBody, C# скрипт и тд
+
+
 - ![image](https://user-images.githubusercontent.com/80514942/194836685-faeb1c03-2190-414a-b805-c6b8bdc45e89.png)
+
+
 
 ```C#
 
