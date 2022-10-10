@@ -1,5 +1,5 @@
 # АНАЛИЗ ДАННЫХ И ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ [in GameDev]
-Отчет по лабораторной работе #2 выполнил(а):
+Отчет по лабораторной работе #3 выполнил(а):
 - Гуревнин Дмитрий Романович
 - 2012676
 Отметка о выполнении заданий (заполняется студентом):
@@ -22,141 +22,91 @@
 
 
 ## Цель работы
-познакомиться с программными средствами для организции
-передачи данных между инструментами google, Python и Unity
+познакомиться с программными средствами для создания
+системы машинного обучения и ее интеграции в Unity.
 
 ## Задание 1
-- Реализовать совместную работу и передачу данных в связке Python - Google-Sheets – Unity. 
-- В облачном сервисе google console подключить API для работы с google
-sheets и google drive.
-- ![image](https://user-images.githubusercontent.com/80514942/193807021-1c6a5c78-64c6-4336-a623-55dc0496e728.png)
-- Реализовать запись данных из скрипта на python в google-таблицу. Данные
-описывают изменение темпа инфляции на протяжении 11 отсчётных периодов, с
-учётом стоимости игрового объекта в каждый период.
-```py
+- Реализовать систему машинного обучения в связке Python -
+Google-Sheets – Unity.
+- Создаем проект в Unity, добовляем в папку с проектом json файлы
 
-import gspread
-import numpy as np
-gc = gspread.service_account(filename= 'our-brand-364417-9a30a1f46b8d.json')
-sh = gc.open("UnitySheets")
-price = np.random.randint(2000, 10000, 11)
-mon = list(range(1, 11))
-i = 0
-while i <= len(mon):
-    i += 1
-    if i ==  0:
-        continue
-    else:
-        tempInf = ((price[i-1]-price[i-2])/price[i-2])*100
-        tempInf = str(tempInf)
-        tempInf = tempInf.replace('.',',')
-        sh.sheet1.update(('A' + str(i)), str(i))
-        sh.sheet1.update(('B' + str(i)), str(price[i-1]))
-        sh.sheet1.update(('C' + str(i)), str(tempInf))
-        print(tempInf)
+-Открываем Anaconda Promt и пишем команды для создания и активации нового ML агента
 
-```
-- ![image](https://user-images.githubusercontent.com/80514942/193807880-cee88180-adf0-48f2-9e53-b12944e48af2.png)
-- Создать новый проект на Unity, который будет получать данные из google-
-таблицы, в которую были записаны данные в предыдущем пункте.
--![image](https://user-images.githubusercontent.com/80514942/193808016-0913c5bf-dbaa-4c42-a873-27c69e865474.png)
--Написать функционал на Unity, в котором будет воспризводиться аудио-
-файл в зависимости от значения данных из таблицы.
+-![image](https://user-images.githubusercontent.com/80514942/194835821-84983737-1208-4c31-aeb3-0af7b3fc0cfb.png)
+-![image](https://user-images.githubusercontent.com/80514942/194835961-461e020e-7cf4-4bc5-9528-5f6282c8c110.png)
+-![image](https://user-images.githubusercontent.com/80514942/194835984-df99956b-b8ed-4adc-864a-5b4817d58dd2.png)
+- Далее в консоли переходим в папку с проектом
+
+- Создаем объекты плоскости, куба и сферы, выставляем настройки у компонентов, добавляем материалы, к
+
+-![image](https://user-images.githubusercontent.com/80514942/194835438-752ed1bd-e747-40e0-8b5f-377199bf81c0.png)
+- ![image](https://user-images.githubusercontent.com/80514942/194836164-75f90456-cd1c-4a71-91b2-22c2beb3778b.png)
+- В инспекторе добавялем в нашу сферу RigidBody, C# скрипт и тд
+- ![image](https://user-images.githubusercontent.com/80514942/194836685-faeb1c03-2190-414a-b805-c6b8bdc45e89.png)
+
 ```C#
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
-using SimpleJSON;
+using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
+using Unity.MLAgents.Actuators;
 
-public class NewBehaviourScript : MonoBehaviour
+public class RollerAgent : Agent
 {
-    public AudioClip goodSpeak;
-    public AudioClip normalSpeak;
-    public AudioClip badSpeak;
-    private AudioSource selectAudio;
-    private Dictionary<string,float> dataSet = new Dictionary<string, float>();
-    private bool statusStart = false;
-    private int i = 1;
-
+    Rigidbody rBody;
     // Start is called before the first frame update
     void Start()
     {
-        StartCoroutine(GoogleSheets());
+        rBody = GetComponent<Rigidbody>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public Transform Target;
+    public override void OnEpisodeBegin()
     {
-        if (dataSet["Mon_" + i.ToString()] <= 10 & statusStart == false & i != dataSet.Count)
+        if (this.transform.localPosition.y < 0)
         {
-            StartCoroutine(PlaySelectAudioGood());
-            Debug.Log(dataSet["Mon_" + i.ToString()]);
+            this.rBody.angularVelocity = Vector3.zero;
+            this.rBody.velocity = Vector3.zero;
+            this.transform.localPosition = new Vector3(0, 0.5f, 0);
         }
 
-        if (dataSet["Mon_" + i.ToString()] > 10 & dataSet["Mon_" + i.ToString()] < 100 & statusStart == false & i != dataSet.Count)
-        {
-            StartCoroutine(PlaySelectAudioNormal());
-            Debug.Log(dataSet["Mon_" + i.ToString()]);
-        }
+        Target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
+    }
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        sensor.AddObservation(Target.localPosition);
+        sensor.AddObservation(this.transform.localPosition);
+        sensor.AddObservation(rBody.velocity.x);
+        sensor.AddObservation(rBody.velocity.z);
+    }
+    public float forceMultiplier = 10;
+    public override void OnActionReceived(ActionBuffers actionBuffers)
+    {
+        Vector3 controlSignal = Vector3.zero;
+        controlSignal.x = actionBuffers.ContinuousActions[0];
+        controlSignal.z = actionBuffers.ContinuousActions[1];
+        rBody.AddForce(controlSignal * forceMultiplier);
 
-        if (dataSet["Mon_" + i.ToString()] >= 100 & statusStart == false & i != dataSet.Count)
-        {
-            StartCoroutine(PlaySelectAudioBad());
-            Debug.Log(dataSet["Mon_" + i.ToString()]);
-        }
-    }
+        float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
 
-    IEnumerator GoogleSheets()
-    {
-        UnityWebRequest curentResp = UnityWebRequest.Get("https://sheets.googleapis.com/v4/spreadsheets/1AsH1Z6uEysjAwXACRI2P4fhmjFNiuIq83tPdBO8McUA/values/Лист1?key=AIzaSyDnnwIH-R5dmOoDzYUD3EDGlTq7shDdKUU");
-        yield return curentResp.SendWebRequest();
-        string rawResp = curentResp.downloadHandler.text;
-        var rawJson = JSON.Parse(rawResp);
-        foreach (var itemRawJson in rawJson["values"])
+        if (distanceToTarget < 1.42f)
         {
-            var parseJson = JSON.Parse(itemRawJson.ToString());
-            var selectRow = parseJson[0].AsStringList;
-            dataSet.Add(("Mon_" + selectRow[0]), float.Parse(selectRow[2]));
+            SetReward(1.0f);
+            EndEpisode();
         }
-    }
-
-    IEnumerator PlaySelectAudioGood()
-    {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = goodSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(3);
-        statusStart = false;
-        i++;
-    }
-    IEnumerator PlaySelectAudioNormal()
-    {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = normalSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(3);
-        statusStart = false;
-        i++;
-    }
-    IEnumerator PlaySelectAudioBad()
-    {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = badSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(4);
-        statusStart = false;
-        i++;
+        else if (this.transform.localPosition.y < 0)
+        {
+            EndEpisode();
+        }
     }
 }
 
 
-
-
 ```
+
+- Добавялем в корень проекта файл конфигурации нейронной сети, запускаем работу ml агента
 
 
 ## Задание 2
