@@ -39,8 +39,14 @@ Google-Sheets – Unity.
 
 
 -![image](https://user-images.githubusercontent.com/80514942/194835821-84983737-1208-4c31-aeb3-0af7b3fc0cfb.png)
+
+
 -![image](https://user-images.githubusercontent.com/80514942/194835961-461e020e-7cf4-4bc5-9528-5f6282c8c110.png)
+
+
 -![image](https://user-images.githubusercontent.com/80514942/194835984-df99956b-b8ed-4adc-864a-5b4817d58dd2.png)
+
+
 - Далее в консоли переходим в папку с проектом
 
 - Создаем объекты плоскости, куба и сферы, выставляем настройки у компонентов, добавляем материалы, к
