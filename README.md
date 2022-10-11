@@ -161,7 +161,7 @@ behaviors:
 ```
 
 ### trainer_type: ppo 
-Тип тренера ppo или sac
+Тип обучения с поощрением
 
 
 
