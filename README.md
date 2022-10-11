@@ -131,6 +131,8 @@ public class RollerAgent : Agent
 
 ![image](https://user-images.githubusercontent.com/80514942/194872880-a0e5957f-1ffe-4cf6-af49-d9f70065c202.png)
 
+### Вывод
+
 
 
 ## Задание 2
@@ -242,140 +244,171 @@ behaviors:
   
 
 ## Задание 3
-### Самостоятельно разработать сценарий воспроизведения звукового
-сопровождения в Unity в зависимости от изменения считанных данных в задании 2
--Будем выводить разницу между ошибками итераций
-```py
-a = np.random.rand(1)
-    b = np.random.rand(1)
-
-    Lr = 0.000001
-
-    old_loss = 0
-    for i in range(10):
-        a, b = iterate(a, b, x, y, 100 * (i + 1))
-
-        prediction = model(a, b, x)
-        loss = loss_function(a, b, x, y)
-
-
-        if i == 0:
-            diff_loss = loss
-        else:
-            diff_loss = abss(loss - old_loss)
-            old_loss = loss
-
-
-
-
-        sh.sheet1.update(('A' + str(i + 1)), str(100 * (i + 1)))
-        sh.sheet1.update(('B' + str(i + 1)), str(a[0]))
-        sh.sheet1.update(('C' + str(i + 1)), str(b[0]))
-        sh.sheet1.update(('D' + str(i + 1)), str(diff_loss))
-```
+### Доработали сцену и обучили ML-Agent таким образом, чтобы шар
+перемещался между двумя кубами разного цвета.
+### Добавим еще один куб
+### Создадим код, в котором опишим перемещение шара между двумя кубиками разного цвета
 ```C#
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
-using SimpleJSON;
+using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
+using Unity.MLAgents.Actuators;
 
-public class NewBehaviourScript : MonoBehaviour
+public class Move : Agent
 {
-    public AudioClip goodSpeak;
-    public AudioClip normalSpeak;
-    public AudioClip badSpeak;
-    private AudioSource selectAudio;
-    private Dictionary<string,float> dataSet = new Dictionary<string, float>();
-    private bool statusStart = false;
-    private int i = 1;
+    [SerializeField] private GameObject goldMine;
+    [SerializeField] private GameObject village;
+    private float speedMove;
+    private float timeMining;
+    private float month;
+    private bool checkMiningStart = false;
+    private bool checkMiningFinish = false;
+    private bool checkStartMonth = false;
+    private bool setSensor = true;
+    private float amountGold;
+    private float pickaxeСost;
+    private float profitPercentage;
+    private float[] pricesMonth = new float[2];
+    private float priceMonth;
+    private float tempInf;
 
     // Start is called before the first frame update
-    void Start()
+    public override void OnEpisodeBegin()
     {
-        StartCoroutine(GoogleSheets());
+        // If the Agent fell, zero its momentum
+        if (this.transform.localPosition != village.transform.localPosition)
+        {
+            this.transform.localPosition = village.transform.localPosition;
+        }
+        checkMiningStart = false;
+        checkMiningFinish = false;
+        checkStartMonth = false;
+        setSensor = true;
+        priceMonth = 0.0f;
+        pricesMonth[0] = 0.0f;
+        pricesMonth[1] = 0.0f;
+        tempInf = 0.0f;
+        month = 1;
+    }
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        sensor.AddObservation(speedMove);
+        sensor.AddObservation(timeMining);
+        sensor.AddObservation(amountGold);
+        sensor.AddObservation(pickaxeСost);
+        sensor.AddObservation(profitPercentage);
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        if (i > dataSet.Count)
+        if (month < 3 || setSensor == true)
         {
-            return;
-        }
+            speedMove = Mathf.Clamp(actionBuffers.ContinuousActions[0], 1f, 10f);
+            Debug.Log("SpeedMove: " + speedMove);
+            timeMining = Mathf.Clamp(actionBuffers.ContinuousActions[1], 1f, 10f);
+            Debug.Log("timeMining: " + timeMining);
+            setSensor = false;
+            if (checkStartMonth == false)
+            {
+                Debug.Log("Start Coroutine StartMonth");
+                StartCoroutine(StartMonth());
+            }
 
-        if (dataSet["iter_" + i.ToString()] > 1000 & statusStart == false & i <= dataSet.Count)
-        {
-            StartCoroutine(PlaySelectAudioBad());
-            Debug.Log(dataSet["iter_" + i.ToString()] + " " + i.ToString());
-        }
+            if (transform.position != goldMine.transform.position & checkMiningFinish == false)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, goldMine.transform.position, Time.deltaTime * speedMove);
+            }
 
-        if (dataSet["iter_" + i.ToString()] < 1000 & dataSet["iter_" + i.ToString()] > 100 & statusStart == false & i <= dataSet.Count)
-        {
-            StartCoroutine(PlaySelectAudioNormal());
-            Debug.Log(dataSet["iter_" + i.ToString()] + " " + i.ToString());
-        }
+            if (transform.position == goldMine.transform.position & checkMiningStart == false)
+            {
+                Debug.Log("Start Coroutine StartGoldMine");
+                StartCoroutine(StartGoldMine());
+            }
 
-        if (dataSet["iter_" + i.ToString()] < 100 & statusStart == false & i <= dataSet.Count)
+            if (transform.position != village.transform.position & checkMiningFinish == true)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, village.transform.position, Time.deltaTime * speedMove);
+            }
+
+            if (transform.position == village.transform.position & checkMiningStart == true)
+            {
+                checkMiningFinish = false;
+                checkMiningStart = false;
+                setSensor = true;
+                amountGold = Mathf.Clamp(actionBuffers.ContinuousActions[2], 1f, 10f);
+                Debug.Log("amountGold: " + amountGold);
+                pickaxeСost = Mathf.Clamp(actionBuffers.ContinuousActions[3], 100f, 1000f);
+                Debug.Log("pickaxeСost: " + pickaxeСost);
+                profitPercentage = Mathf.Clamp(actionBuffers.ContinuousActions[4], 0.1f, 0.5f);
+                Debug.Log("profitPercentage: " + profitPercentage);
+
+                if (month != 2)
+                {
+                    priceMonth = pricesMonth[0] + ((pickaxeСost + pickaxeСost * profitPercentage) / amountGold);
+                    pricesMonth[0] = priceMonth;
+                    Debug.Log("priceMonth: " + priceMonth);
+                }
+                if (month == 2)
+                {
+                    priceMonth = pricesMonth[1] + ((pickaxeСost + pickaxeСost * profitPercentage) / amountGold);
+                    pricesMonth[1] = priceMonth;
+                    Debug.Log("priceMonth: " + priceMonth);
+                }
+
+            }
+        }
+        else
         {
-            StartCoroutine(PlaySelectAudioGood());
-            Debug.Log(dataSet["iter_" + i.ToString()] + " " + i.ToString());
+            tempInf = ((pricesMonth[1] - pricesMonth[0]) / pricesMonth[0]) * 100;
+            if (tempInf <= 6f)
+            {
+                SetReward(1.0f);
+                Debug.Log("True");
+                Debug.Log("tempInf: " + tempInf);
+                EndEpisode();
+            }
+            else
+            {
+                SetReward(-1.0f);
+                Debug.Log("False");
+                Debug.Log("tempInf: " + tempInf);
+                EndEpisode();
+            }
         }
     }
-    IEnumerator GoogleSheets()
+
+    IEnumerator StartGoldMine()
     {
-        UnityWebRequest curentResp = UnityWebRequest.Get("https://sheets.googleapis.com/v4/spreadsheets/1WiQ6zudIP8BAGc32i8sB8U0b0Klndb6aI0I1X2EWYls/values/Лист1?key=AIzaSyBH3mfoAHk8DRpuESExMeNvIOMmwtrWvoo");
-        yield return curentResp.SendWebRequest();
-        string rawResp = curentResp.downloadHandler.text;
-        var rawJson = JSON.Parse(rawResp);
-        foreach (var itemRawJson in rawJson["values"])
-        {
-            var parseJson = JSON.Parse(itemRawJson.ToString());
-            var selectRow = parseJson[0].AsStringList;
-            dataSet.Add(("iter_" + selectRow[0]), float.Parse(selectRow[2]));
-        }
+        checkMiningStart = true;
+        yield return new WaitForSeconds(timeMining);
+        Debug.Log("Mining Finish");
+        checkMiningFinish = true;
     }
 
-    IEnumerator PlaySelectAudioGood()
+    IEnumerator StartMonth()
     {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = goodSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(3);
-        statusStart = false;
-        i++;
-    }
-    IEnumerator PlaySelectAudioNormal()
-    {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = normalSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(3);
-        statusStart = false;
-        i++;
-    }
-    IEnumerator PlaySelectAudioBad()
-    {
-        statusStart = true;
-        selectAudio = GetComponent<AudioSource>();
-        selectAudio.clip = badSpeak;
-        selectAudio.Play();
-        yield return new WaitForSeconds(4);
-        statusStart = false;
-        i++;
+        checkStartMonth = true;
+        yield return new WaitForSeconds(60);
+        checkStartMonth = false;
+        month++;
+
     }
 }
 
+
 ```
--![image](https://user-images.githubusercontent.com/80514942/193809201-2235690e-50c6-4e95-aa79-4bbf3f0f5f20.png)
+### Получили результат
+![image](https://user-images.githubusercontent.com/80514942/195200139-12a48a3b-67c7-4b8a-8e19-49d564010e17.png)
 
 
 
-## Выводы
 
-Научился изменять данные в таблице Google  с помощью Python, затем используя эти данные в  Unity, поработал с файлами JSON и звуками. При выводе даных из первой лабороторной работы в Google Sheets,и при дальнейшем использовании в Unity, возникли трудности с тем, что Unity ругался на саму первую итерацию, выдавал ошибку, но после того, как я исправил тем, что когда дата сет еще не подргузился мы ничего неделаем, все заработало. 
+
+
+## Вывод
+
 
 
 
