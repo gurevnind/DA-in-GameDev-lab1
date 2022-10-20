@@ -131,6 +131,7 @@ public class RollerAgent : Agent
 ![image](https://user-images.githubusercontent.com/80514942/194872880-a0e5957f-1ffe-4cf6-af49-d9f70065c202.png)
 
 ### Вывод
+Чем больше количество агентов, тем быстрее модель достигает более точных результатов.
 
 
 
